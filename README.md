@@ -12,7 +12,7 @@ TestFlight needs a native iOS binary, so the web app must be wrapped. Capacitor 
 npm init -y
 npm install @capacitor/core @capacitor/cli @capacitor/ios
 mkdir www && cp index.html apple-touch-icon.png www/
-npx cap init "Cal & Carb Counter" com.calcarb.app --web-dir=www
+npx cap init "Cal & Carb Counter" com.etwintech.calcarb --web-dir=www
 npx cap add ios
 npx cap open ios
 ```

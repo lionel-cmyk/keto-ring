@@ -1,11 +1,15 @@
 # Cal & Carb Counter — App Store metadata pack
 
-Everything needed to fill in App Store Connect. Icon: `appstore-icon-1024.png` (1024×1024, no alpha needed — solid background).
+Everything needed to fill in App Store Connect.
+Assets: `appstore-icon-1024.png` (1024×1024, solid background) · `appstore-screenshots/` (3 × 1290×2796, iPhone 6.7" — the required size; App Store Connect auto-scales them for smaller devices).
 
-## Identity
+## Identity & ownership
 - **App name:** Cal & Carb Counter
 - **Subtitle (30 chars):** Keto net carbs, made simple
-- **Bundle ID suggestion:** com.calcarb.app
+- **Bundle ID:** com.etwintech.calcarb
+- **Owner / seller:** Etwintec (Jo's organization developer account uploads and owns the app)
+- **Copyright:** © 2026 Etwintec
+- **Support URL:** https://github.com/lionel-cmyk/keto-ring
 - **Category:** Health & Fitness (secondary: Food & Drink)
 - **Price:** Free (monetization decided after TestFlight validation)
 
@@ -39,3 +43,19 @@ Packaged-food data from Open Food Facts.
 
 ## TestFlight "What to Test" note
 Log everything you eat for a few days. We're testing: (1) is search fast enough at the fridge door, (2) is the built-in food list missing anything you eat weekly, (3) do you trust the ring at a glance. Barcode entry is manual in this build — camera scanning comes in the next build.
+
+## Publish checklist (Jo)
+**Phase 1 — TestFlight (can be done today)**
+1. Clone the repo, follow README (Capacitor wrap, ~1 hour)
+2. In App Store Connect: create the app record (name, bundle ID, primary language English U.S.)
+3. Upload build via Xcode → Archive → Distribute
+4. TestFlight → add internal testers (Lionel's Apple ID email) — no review needed, invite lands in minutes
+
+**Phase 2 — App Store release (after test week + camera scanning)**
+1. Add camera barcode scanning (see README — @capacitor-mlkit/barcode-scanning)
+2. Fill listing from this file: subtitle, promo text, description, keywords, category
+3. Upload the 3 screenshots from `appstore-screenshots/`
+4. App Privacy: select "Data Not Collected" (truthful — see privacy section)
+5. Privacy policy URL: https://lionel-cmyk.github.io/keto-ring/privacy.html
+6. Age rating questionnaire: everything "None" → 4+
+7. Submit for review (first review typically 24–48h)
