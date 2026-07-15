@@ -32,7 +32,7 @@ Packaged-food data from Open Food Facts.
 
 ## App Review / privacy answers
 - **Privacy nutrition label:** Data Not Collected (everything stays in local storage; the only network calls are anonymous food lookups to Open Food Facts)
-- **Privacy policy URL:** needed before submission — a one-paragraph "we collect nothing" page is enough (can be a page on the GitHub Pages site)
+- **Privacy policy URL:** https://lionel-cmyk.github.io/keto-ring/privacy.html
 - **Health claims:** none made in-app; avoid "diabetes"/medical wording in the listing
 - **Age rating:** 4+
 - **Data attribution:** Open Food Facts (ODbL) — credited in description
