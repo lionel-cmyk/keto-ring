@@ -1,11 +1,11 @@
-# Keto Ring — App Store metadata pack
+# Cal & Carb Counter — App Store metadata pack
 
 Everything needed to fill in App Store Connect. Icon: `appstore-icon-1024.png` (1024×1024, no alpha needed — solid background).
 
 ## Identity
-- **App name:** Keto Ring – Net Carb Counter
-- **Subtitle (30 chars):** Simple keto carb tracking
-- **Bundle ID suggestion:** com.ketoring.app
+- **App name:** Cal & Carb Counter
+- **Subtitle (30 chars):** Keto net carbs, made simple
+- **Bundle ID suggestion:** com.calcarb.app
 - **Category:** Health & Fitness (secondary: Food & Drink)
 - **Price:** Free (monetization decided after TestFlight validation)
 
@@ -16,7 +16,7 @@ Everything needed to fill in App Store Connect. Icon: `appstore-icon-1024.png` (
 One screen. Search a food, see net carbs, tap to add. A daily ring shows exactly where you stand. No accounts, no ads, no clutter.
 
 ## Description
-Keto Ring does one thing perfectly: it counts your net carbs.
+Cal & Carb Counter does one thing perfectly: it counts your net carbs and calories.
 
 Search any food — or look up a barcode — see its net carbs instantly, and tap to add it to your day. A single ring fills as you eat: green when you're safe, amber when you're close, red when you're over. That's the whole app.
 

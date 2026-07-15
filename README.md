@@ -1,4 +1,4 @@
-# Keto Ring — Net Carb Counter
+# Cal & Carb Counter
 
 One-screen keto app: search or scan a food, see net carbs, tap to add to today's total, watch the daily ring fill. Live web version: https://lionel-cmyk.github.io/keto-ring/
 
@@ -12,7 +12,7 @@ TestFlight needs a native iOS binary, so the web app must be wrapped. Capacitor 
 npm init -y
 npm install @capacitor/core @capacitor/cli @capacitor/ios
 mkdir www && cp index.html apple-touch-icon.png www/
-npx cap init "Keto Ring" com.ketoring.app --web-dir=www
+npx cap init "Cal & Carb Counter" com.calcarb.app --web-dir=www
 npx cap add ios
 npx cap open ios
 ```
