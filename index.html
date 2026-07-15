@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A0A0C">
+<meta name="apple-mobile-web-app-title" content="Keto Ring">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Keto Ring — Net Carb Counter</title>
+<style>
+  :root {
+    --bg: #0A0A0C;
+    --surface: #141418;
+    --surface-2: #1C1C22;
+    --border: #26262E;
+    --text: #F5F5F7;
+    --text-dim: #8E8E96;
+    --green: #30D158;
+    --green-dim: #1D7A36;
+    --amber: #FFD60A;
+    --red: #FF453A;
+    --ring-track: #1E1E24;
+    --radius: 18px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  .app {
+    max-width: 430px;
+    margin: 0 auto;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: calc(var(--safe-top) + 16px) 20px calc(var(--safe-bottom) + 24px);
+  }
+
+  /* Header */
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .date { font-size: 13px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+  h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .goal-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 999px; padding: 8px 14px; font-size: 13px; font-weight: 600;
+    cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 6px;
+    transition: background 0.2s;
+  }
+  .goal-btn:active { background: var(--surface-2); }
+  .goal-btn svg { width: 14px; height: 14px; }
+
+  /* Ring */
+  .ring-wrap { display: flex; justify-content: center; padding: 18px 0 10px; position: relative; }
+  .ring-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none;
+  }
+  .ring-value { font-size: 56px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+  .ring-value small { font-size: 22px; font-weight: 600; color: var(--text-dim); }
+  .ring-label { font-size: 13px; font-weight: 600; color: var(--text-dim); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .ring-remaining { font-size: 14px; color: var(--text-dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  svg.ring { display: block; }
+  .ring-progress { transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.4s; }
+  @media (prefers-reduced-motion: reduce) { .ring-progress { transition: none; } }
+
+  /* Search */
+  .search-row { display: flex; gap: 10px; margin: 14px 0 4px; }
+  .search-box {
+    flex: 1; display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 0 14px; min-height: 50px;
+  }
+  .search-box svg { width: 18px; height: 18px; color: var(--text-dim); flex-shrink: 0; }
+  .search-box input {
+    flex: 1; background: none; border: none; outline: none; color: var(--text);
+    font-size: 16px; font-family: inherit; min-height: 48px;
+  }
+  .search-box input::placeholder { color: var(--text-dim); }
+  .scan-btn {
+    width: 50px; min-height: 50px; border-radius: 14px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--green); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: background 0.2s;
+  }
+  .scan-btn:active { background: var(--surface-2); }
+  .scan-btn svg { width: 22px; height: 22px; }
+  .search-box:focus-within { border-color: var(--green-dim); }
+
+  /* Results */
+  .results { margin-top: 8px; display: none; flex-direction: column; gap: 2px; }
+  .results.open { display: flex; }
+  .results-note { font-size: 12px; color: var(--text-dim); padding: 8px 4px 4px; }
+  .food-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px 14px; margin-bottom: 8px; cursor: pointer; min-height: 60px;
+    transition: transform 0.15s, background 0.2s; text-align: left; width: 100%;
+    color: var(--text); font-family: inherit;
+  }
+  .food-row:active { transform: scale(0.98); background: var(--surface-2); }
+  .food-name { font-size: 15px; font-weight: 600; }
+  .food-serving { font-size: 12.5px; color: var(--text-dim); margin-top: 1px; }
+  .food-carbs { text-align: right; flex-shrink: 0; }
+  .food-carbs b { font-size: 17px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; }
+  .food-carbs.mid b { color: var(--amber); }
+  .food-carbs.high b { color: var(--red); }
+  .food-carbs span { display: block; font-size: 11px; color: var(--text-dim); }
+
+  /* Log */
+  .log-section { margin-top: 22px; flex: 1; }
+  .log-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .log-head h2 { font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+  .log-total { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+  .log-empty {
+    text-align: center; color: var(--text-dim); font-size: 14px;
+    padding: 32px 20px; background: var(--surface); border-radius: var(--radius);
+    border: 1px dashed var(--border);
+  }
+  .log-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 10px 8px 10px 14px; margin-bottom: 8px;
+  }
+  .log-item-info { flex: 1; min-width: 0; }
+  .log-item-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .log-item-meta { font-size: 12.5px; color: var(--text-dim); }
+  .log-item-carbs { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+  .del-btn {
+    width: 44px; height: 44px; border-radius: 12px; border: none; background: none;
+    color: var(--text-dim); cursor: pointer; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0; transition: color 0.2s;
+  }
+  .del-btn:active { color: var(--red); }
+  .del-btn svg { width: 18px; height: 18px; }
+
+  /* Bottom sheet */
+  .sheet-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.55); opacity: 0;
+    pointer-events: none; transition: opacity 0.25s; z-index: 40;
+  }
+  .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 50;
+    max-width: 430px; margin: 0 auto;
+    background: var(--surface-2); border-radius: 24px 24px 0 0;
+    padding: 20px 20px calc(var(--safe-bottom) + 20px);
+    transform: translateY(105%); transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    border: 1px solid var(--border); border-bottom: none;
+  }
+  .sheet.open { transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) { .sheet, .sheet-backdrop { transition: none; } }
+  .sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 16px; }
+  .sheet h3 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; }
+  .sheet .sub { font-size: 13.5px; color: var(--text-dim); margin-top: 2px; }
+  .stepper { display: flex; align-items: center; justify-content: center; gap: 24px; margin: 22px 0; }
+  .step-btn {
+    width: 52px; height: 52px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); font-size: 26px; font-weight: 500;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s; font-family: inherit;
+  }
+  .step-btn:active { background: var(--border); }
+  .step-val { text-align: center; min-width: 110px; }
+  .step-val b { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .step-val span { display: block; font-size: 12.5px; color: var(--text-dim); }
+  .sheet-carbs { text-align: center; font-size: 15px; color: var(--text-dim); margin-bottom: 18px; }
+  .sheet-carbs b { color: var(--green); font-size: 17px; font-variant-numeric: tabular-nums; }
+  .add-btn {
+    width: 100%; min-height: 54px; border-radius: 16px; border: none;
+    background: var(--green); color: #04180A; font-size: 17px; font-weight: 700;
+    cursor: pointer; font-family: inherit; transition: transform 0.15s, opacity 0.2s;
+  }
+  .add-btn:active { transform: scale(0.98); opacity: 0.9; }
+
+  /* Goal sheet */
+  .goal-options { display: flex; gap: 10px; margin: 20px 0; }
+  .goal-opt {
+    flex: 1; min-height: 64px; border-radius: 14px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--text); cursor: pointer; font-family: inherit;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .goal-opt b { font-size: 20px; font-weight: 700; }
+  .goal-opt span { font-size: 11.5px; color: var(--text-dim); }
+  .goal-opt.sel { border-color: var(--green); background: rgba(48, 209, 88, 0.08); }
+
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--green);
+    border-radius: 50%; animation: spin 0.7s linear infinite; margin: 14px auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    position: fixed; bottom: calc(var(--safe-bottom) + 24px); left: 50%;
+    transform: translateX(-50%) translateY(80px); background: var(--surface-2);
+    border: 1px solid var(--border); color: var(--text); font-size: 14px; font-weight: 600;
+    padding: 12px 20px; border-radius: 999px; z-index: 60; transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+    display: flex; align-items: center; gap: 8px; white-space: nowrap;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast svg { width: 16px; height: 16px; color: var(--green); }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="date" id="dateLabel"></div>
+      <h1>Net Carbs</h1>
+    </div>
+    <button class="goal-btn" id="goalBtn" aria-label="Change daily goal">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>
+      <span id="goalLabel">20g goal</span>
+    </button>
+  </header>
+
+  <div class="ring-wrap">
+    <svg class="ring" width="250" height="250" viewBox="0 0 250 250" role="img" aria-label="Daily net carb progress">
+      <defs>
+        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#30D158"/>
+          <stop offset="100%" stop-color="#63E88A"/>
+        </linearGradient>
+      </defs>
+      <circle cx="125" cy="125" r="108" fill="none" stroke="var(--ring-track)" stroke-width="20"/>
+      <circle id="ringProgress" class="ring-progress" cx="125" cy="125" r="108" fill="none"
+        stroke="url(#ringGrad)" stroke-width="20" stroke-linecap="round"
+        transform="rotate(-90 125 125)"/>
+    </svg>
+    <div class="ring-center">
+      <div class="ring-value"><span id="totalVal">0</span><small>g</small></div>
+      <div class="ring-label">of <span id="goalVal">20</span>g</div>
+      <div class="ring-remaining" id="remainingLabel">20g left</div>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="searchInput" type="search" placeholder="Search a food…" autocomplete="off" enterkeyhint="search" aria-label="Search a food">
+    </div>
+    <button class="scan-btn" id="scanBtn" aria-label="Scan barcode">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M11 8v8M15 8v8M17.5 8v8"/></svg>
+    </button>
+  </div>
+
+  <div class="results" id="results" role="listbox" aria-label="Search results"></div>
+
+  <div class="log-section">
+    <div class="log-head">
+      <h2>Today</h2>
+      <div class="log-total" id="logCount"></div>
+    </div>
+    <div id="log"></div>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="backdrop"></div>
+
+<div class="sheet" id="addSheet" role="dialog" aria-modal="true" aria-label="Add food">
+  <div class="sheet-handle"></div>
+  <h3 id="sheetName"></h3>
+  <div class="sub" id="sheetServing"></div>
+  <div class="stepper">
+    <button class="step-btn" id="stepDown" aria-label="Decrease amount">−</button>
+    <div class="step-val"><b id="stepQty">1</b><span id="stepUnit">serving</span></div>
+    <button class="step-btn" id="stepUp" aria-label="Increase amount">+</button>
+  </div>
+  <div class="sheet-carbs">Adds <b id="sheetCarbs">0g</b> net carbs</div>
+  <button class="add-btn" id="confirmAdd">Add to Today</button>
+</div>
+
+<div class="sheet" id="goalSheet" role="dialog" aria-modal="true" aria-label="Daily goal">
+  <div class="sheet-handle"></div>
+  <h3>Daily net carb goal</h3>
+  <div class="sub">Strict keto is usually 20g. Choose what fits you.</div>
+  <div class="goal-options" id="goalOptions">
+    <button class="goal-opt" data-goal="20"><b>20g</b><span>Strict</span></button>
+    <button class="goal-opt" data-goal="30"><b>30g</b><span>Moderate</span></button>
+    <button class="goal-opt" data-goal="50"><b>50g</b><span>Liberal</span></button>
+    <button class="goal-opt" data-goal="100"><b>100g</b><span>Low carb</span></button>
+  </div>
+  <button class="add-btn" id="confirmGoal">Set Goal</button>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg>
+  <span id="toastMsg">Added</span>
+</div>
+
+<script>
+'use strict';
+
+/* ---------- Built-in whole-food database (net carbs g per serving) ---------- */
+const FOODS = [
+  { n: "Egg", s: "1 large", g: 0.4 },
+  { n: "Avocado", s: "half, 100g", g: 1.8 },
+  { n: "Bacon", s: "2 slices", g: 0.2 },
+  { n: "Butter", s: "1 tbsp", g: 0 },
+  { n: "Olive oil", s: "1 tbsp", g: 0 },
+  { n: "Chicken breast", s: "150g", g: 0 },
+  { n: "Chicken thigh", s: "150g", g: 0 },
+  { n: "Ground beef", s: "150g", g: 0 },
+  { n: "Ribeye steak", s: "200g", g: 0 },
+  { n: "Salmon", s: "150g fillet", g: 0 },
+  { n: "Tuna", s: "1 can, 140g", g: 0 },
+  { n: "Shrimp", s: "100g", g: 0.2 },
+  { n: "Cheddar cheese", s: "30g", g: 0.4 },
+  { n: "Mozzarella", s: "30g", g: 0.7 },
+  { n: "Cream cheese", s: "2 tbsp", g: 1.6 },
+  { n: "Parmesan", s: "30g", g: 1.0 },
+  { n: "Feta", s: "30g", g: 1.2 },
+  { n: "Goat cheese", s: "30g", g: 0.3 },
+  { n: "Heavy cream", s: "2 tbsp", g: 0.8 },
+  { n: "Greek yogurt, plain", s: "170g", g: 6.0 },
+  { n: "Almonds", s: "28g, ~23 nuts", g: 2.6 },
+  { n: "Walnuts", s: "28g", g: 2.0 },
+  { n: "Pecans", s: "28g", g: 1.2 },
+  { n: "Macadamia nuts", s: "28g", g: 1.5 },
+  { n: "Peanut butter", s: "2 tbsp", g: 4.5 },
+  { n: "Almond butter", s: "2 tbsp", g: 3.0 },
+  { n: "Chia seeds", s: "2 tbsp", g: 1.7 },
+  { n: "Spinach", s: "100g raw", g: 1.4 },
+  { n: "Kale", s: "100g raw", g: 3.4 },
+  { n: "Lettuce", s: "100g", g: 1.5 },
+  { n: "Arugula", s: "100g", g: 2.1 },
+  { n: "Broccoli", s: "100g", g: 4.0 },
+  { n: "Cauliflower", s: "100g", g: 3.0 },
+  { n: "Zucchini", s: "100g", g: 2.1 },
+  { n: "Cucumber", s: "100g", g: 3.1 },
+  { n: "Bell pepper", s: "100g", g: 3.9 },
+  { n: "Mushrooms", s: "100g", g: 2.3 },
+  { n: "Asparagus", s: "100g", g: 1.8 },
+  { n: "Green beans", s: "100g", g: 4.3 },
+  { n: "Brussels sprouts", s: "100g", g: 5.2 },
+  { n: "Cabbage", s: "100g", g: 3.3 },
+  { n: "Celery", s: "100g", g: 1.4 },
+  { n: "Tomato", s: "1 medium", g: 3.3 },
+  { n: "Onion", s: "half, 55g", g: 3.9 },
+  { n: "Garlic", s: "1 clove", g: 0.9 },
+  { n: "Olives", s: "10 olives", g: 0.6 },
+  { n: "Strawberries", s: "100g", g: 5.7 },
+  { n: "Raspberries", s: "100g", g: 5.4 },
+  { n: "Blackberries", s: "100g", g: 4.9 },
+  { n: "Blueberries", s: "100g", g: 12.1 },
+  { n: "Lemon juice", s: "1 tbsp", g: 1.0 },
+  { n: "Coconut oil", s: "1 tbsp", g: 0 },
+  { n: "Coconut milk", s: "100ml", g: 2.7 },
+  { n: "Dark chocolate 85%", s: "2 squares, 20g", g: 3.8 },
+  { n: "Coffee, black", s: "1 cup", g: 0 },
+  { n: "Coffee with cream", s: "1 cup", g: 1.0 },
+  { n: "Dry red wine", s: "1 glass, 150ml", g: 3.8 },
+  { n: "Dry white wine", s: "1 glass, 150ml", g: 3.8 },
+  { n: "Vodka / whiskey", s: "1 shot, 45ml", g: 0 },
+  { n: "Cauliflower rice", s: "100g", g: 3.0 },
+  { n: "Zucchini noodles", s: "100g", g: 2.1 },
+  { n: "Pork chop", s: "150g", g: 0 },
+  { n: "Ham", s: "2 slices, 60g", g: 1.0 },
+  { n: "Salami", s: "5 slices, 50g", g: 1.0 },
+  { n: "Hot dog / sausage", s: "1 link", g: 1.5 },
+  { n: "Mayonnaise", s: "1 tbsp", g: 0.1 },
+  { n: "Mustard", s: "1 tsp", g: 0.3 },
+  { n: "Soy sauce", s: "1 tbsp", g: 0.8 },
+  { n: "Edamame", s: "100g", g: 3.6 },
+  { n: "Tofu", s: "100g", g: 1.5 },
+  { n: "Pickles, dill", s: "1 spear", g: 0.8 },
+  { n: "Sauerkraut", s: "100g", g: 1.4 },
+  { n: "Bone broth", s: "1 cup", g: 0.7 },
+  { n: "Whey protein", s: "1 scoop", g: 2.0 },
+  { n: "Milk, whole", s: "1 cup, 240ml", g: 11.7 },
+  { n: "Almond milk, unsweetened", s: "1 cup, 240ml", g: 1.0 },
+  { n: "Banana", s: "1 medium", g: 23.9 },
+  { n: "Apple", s: "1 medium", g: 20.8 },
+  { n: "White bread", s: "1 slice", g: 12.7 },
+  { n: "White rice, cooked", s: "100g", g: 27.9 },
+  { n: "Pasta, cooked", s: "100g", g: 29.3 },
+  { n: "Potato", s: "1 medium", g: 33.8 },
+  { n: "Sweet potato", s: "1 medium", g: 20.1 },
+  { n: "Sugar", s: "1 tsp", g: 4.2 },
+  { n: "Honey", s: "1 tbsp", g: 17.2 },
+  { n: "Beer", s: "1 can, 355ml", g: 12.6 },
+  { n: "Orange juice", s: "1 cup, 240ml", g: 25.5 }
+];
+
+/* ---------- State ---------- */
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const store = {
+  load() {
+    let d;
+    try { d = JSON.parse(localStorage.getItem("ketoring")) || {}; } catch { d = {}; }
+    if (d.date !== todayKey()) d = { date: todayKey(), goal: d.goal || 20, log: [] };
+    if (!d.goal) d.goal = 20;
+    if (!Array.isArray(d.log)) d.log = [];
+    return d;
+  },
+  save(d) { localStorage.setItem("ketoring", JSON.stringify(d)); }
+};
+let state = store.load();
+let pendingFood = null;
+let pendingQty = 1;
+let pendingGoal = state.goal;
+
+/* ---------- Elements ---------- */
+const $ = id => document.getElementById(id);
+const ringProgress = $("ringProgress"), totalVal = $("totalVal"), goalVal = $("goalVal"),
+  remainingLabel = $("remainingLabel"), goalLabel = $("goalLabel"), results = $("results"),
+  searchInput = $("searchInput"), log = $("log"), logCount = $("logCount"),
+  backdrop = $("backdrop"), addSheet = $("addSheet"), goalSheet = $("goalSheet"),
+  toast = $("toast"), toastMsg = $("toastMsg");
+
+const CIRC = 2 * Math.PI * 108;
+ringProgress.style.strokeDasharray = CIRC;
+
+/* ---------- Render ---------- */
+function total() { return state.log.reduce((s, i) => s + i.carbs, 0); }
+
+function render() {
+  const t = total(), goal = state.goal;
+  const pct = Math.min(t / goal, 1);
+  ringProgress.style.strokeDashoffset = CIRC * (1 - pct);
+
+  const grad = ringProgress;
+  if (t > goal) { grad.style.stroke = "var(--red)"; }
+  else if (t > goal * 0.8) { grad.style.stroke = "var(--amber)"; }
+  else { grad.style.stroke = "url(#ringGrad)"; }
+
+  totalVal.textContent = fmt(t);
+  goalVal.textContent = goal;
+  goalLabel.textContent = goal + "g goal";
+  const left = goal - t;
+  remainingLabel.textContent = left >= 0 ? fmt(left) + "g left" : fmt(-left) + "g over";
+  remainingLabel.style.color = left >= 0 ? "var(--text-dim)" : "var(--red)";
+
+  logCount.textContent = state.log.length ? state.log.length + " item" + (state.log.length > 1 ? "s" : "") + " · " + fmt(t) + "g" : "";
+  if (!state.log.length) {
+    log.innerHTML = '<div class="log-empty">Nothing logged yet.<br>Search a food above to start your ring.</div>';
+  } else {
+    log.innerHTML = state.log.map((item, i) => `
+      <div class="log-item">
+        <div class="log-item-info">
+          <div class="log-item-name">${esc(item.name)}</div>
+          <div class="log-item-meta">${esc(item.meta)}</div>
+        </div>
+        <div class="log-item-carbs">${fmt(item.carbs)}g</div>
+        <button class="del-btn" data-del="${i}" aria-label="Remove ${esc(item.name)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+        </button>
+      </div>`).join("");
+  }
+}
+function fmt(n) { return (Math.round(n * 10) / 10).toString().replace(/\.0$/, ""); }
+function carbClass(g) { return g > 10 ? "high" : g > 5 ? "mid" : ""; }
+function esc(s) { const d = document.createElement("div"); d.textContent = s; return d.innerHTML; }
+
+$("dateLabel").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+
+/* ---------- Search ---------- */
+let offTimer = null, offSeq = 0;
+
+searchInput.addEventListener("input", () => {
+  const q = searchInput.value.trim().toLowerCase();
+  clearTimeout(offTimer);
+  if (!q) { results.classList.remove("open"); results.innerHTML = ""; return; }
+
+  const local = FOODS.filter(f => f.n.toLowerCase().includes(q)).slice(0, 8);
+  renderResults(local.map(f => ({ name: f.n, serving: f.s, carbs: f.g, src: "local" })), q.length >= 3);
+
+  if (q.length >= 3) offTimer = setTimeout(() => searchOFF(q, local), 500);
+});
+
+function renderResults(items, searching) {
+  results.classList.add("open");
+  results.innerHTML = items.map((f, i) => `
+    <button class="food-row" data-idx="${i}">
+      <div><div class="food-name">${esc(f.name)}</div><div class="food-serving">${esc(f.serving)}</div></div>
+      <div class="food-carbs ${carbClass(f.carbs)}"><b>${fmt(f.carbs)}g</b><span>net carbs</span></div>
+    </button>`).join("")
+    + (searching ? '<div class="spinner" id="offSpinner"></div>' : "")
+    + (!items.length && !searching ? '<div class="results-note">No match yet — keep typing to search the packaged-food database.</div>' : "");
+  results._items = items;
+}
+
+async function searchOFF(q, localItems) {
+  const seq = ++offSeq;
+  try {
+    const url = "https://world.openfoodfacts.org/cgi/search.pl?search_terms=" + encodeURIComponent(q)
+      + "&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,nutriments,serving_size";
+    const res = await fetch(url);
+    const data = await res.json();
+    if (seq !== offSeq) return;
+    const seen = new Set();
+    const packaged = (data.products || []).map(p => offToFood(p)).filter(Boolean)
+      .filter(f => { const k = f.name.toLowerCase() + "|" + f.carbs; if (seen.has(k)) return false; seen.add(k); return true; })
+      .slice(0, 6);
+    const merged = localItems.map(f => ({ name: f.n, serving: f.s, carbs: f.g })).concat(packaged);
+    renderResults(merged, false);
+  } catch {
+    if (seq !== offSeq) return;
+    const spinner = document.getElementById("offSpinner");
+    if (spinner) spinner.remove();
+    if (!localItems.length) {
+      results.innerHTML += '<div class="results-note">Couldn’t reach the food database — check your connection and keep typing to retry.</div>';
+    }
+  }
+}
+
+function offToFood(p) {
+  const n = p.nutriments || {};
+  const carbs100 = parseFloat(n.carbohydrates_100g);
+  if (isNaN(carbs100) || !p.product_name) return null;
+  const fiber100 = parseFloat(n.fiber_100g) || 0;
+  const net100 = Math.max(0, carbs100 - fiber100);
+  const brand = p.brands ? p.brands.split(",")[0].trim() : "";
+  const name = brand && brand.toLowerCase() !== p.product_name.trim().toLowerCase()
+    ? p.product_name + " · " + brand : p.product_name;
+  return {
+    name,
+    serving: "per 100g",
+    carbs: Math.round(net100 * 10) / 10,
+    per100: true
+  };
+}
+
+/* ---------- Barcode ---------- */
+$("scanBtn").addEventListener("click", async () => {
+  const code = prompt("Enter the barcode number on the package:");
+  if (!code || !/^\d{6,14}$/.test(code.trim())) { if (code) showToast("Invalid barcode"); return; }
+  showToast("Looking up…");
+  try {
+    const res = await fetch("https://world.openfoodfacts.org/api/v2/product/" + code.trim() + ".json?fields=product_name,brands,nutriments,serving_size");
+    const data = await res.json();
+    const f = data.product ? offToFood(data.product) : null;
+    if (!f) { showToast("Product not found"); return; }
+    openAddSheet(f);
+  } catch { showToast("Lookup failed — check connection"); }
+});
+
+/* ---------- Add flow ---------- */
+results.addEventListener("click", e => {
+  const row = e.target.closest(".food-row");
+  if (!row) return;
+  const f = results._items[+row.dataset.idx];
+  if (f) openAddSheet(f);
+});
+
+function openAddSheet(food) {
+  pendingFood = food; pendingQty = 1;
+  $("sheetName").textContent = food.name;
+  $("sheetServing").textContent = (food.per100 ? "Per 100g" : "Per serving: " + food.serving) + " · " + fmt(food.carbs) + "g net carbs";
+  $("stepUnit").textContent = food.per100 ? "× 100g" : "servings";
+  updateSheet();
+  openSheet(addSheet);
+}
+function updateSheet() {
+  $("stepQty").textContent = fmt(pendingQty);
+  $("sheetCarbs").textContent = fmt(pendingFood.carbs * pendingQty) + "g";
+}
+$("stepDown").addEventListener("click", () => { if (pendingQty > 0.5) { pendingQty -= 0.5; updateSheet(); } });
+$("stepUp").addEventListener("click", () => { if (pendingQty < 20) { pendingQty += 0.5; updateSheet(); } });
+
+$("confirmAdd").addEventListener("click", () => {
+  if (!pendingFood) return;
+  state.log.unshift({
+    name: pendingFood.name,
+    meta: fmt(pendingQty) + (pendingFood.per100 ? " × 100g" : " × " + pendingFood.serving),
+    carbs: Math.round(pendingFood.carbs * pendingQty * 10) / 10
+  });
+  store.save(state);
+  closeSheets(); render();
+  searchInput.value = ""; results.classList.remove("open"); results.innerHTML = "";
+  showToast("Added " + fmt(pendingFood.carbs * pendingQty) + "g");
+});
+
+/* ---------- Delete ---------- */
+log.addEventListener("click", e => {
+  const btn = e.target.closest("[data-del]");
+  if (!btn) return;
+  state.log.splice(+btn.dataset.del, 1);
+  store.save(state); render();
+});
+
+/* ---------- Goal ---------- */
+$("goalBtn").addEventListener("click", () => {
+  pendingGoal = state.goal;
+  document.querySelectorAll(".goal-opt").forEach(b => b.classList.toggle("sel", +b.dataset.goal === pendingGoal));
+  openSheet(goalSheet);
+});
+$("goalOptions").addEventListener("click", e => {
+  const b = e.target.closest(".goal-opt");
+  if (!b) return;
+  pendingGoal = +b.dataset.goal;
+  document.querySelectorAll(".goal-opt").forEach(x => x.classList.toggle("sel", x === b));
+});
+$("confirmGoal").addEventListener("click", () => {
+  state.goal = pendingGoal; store.save(state); closeSheets(); render();
+});
+
+/* ---------- Sheets & toast ---------- */
+function openSheet(el) { backdrop.classList.add("open"); el.classList.add("open"); }
+function closeSheets() { backdrop.classList.remove("open"); addSheet.classList.remove("open"); goalSheet.classList.remove("open"); }
+backdrop.addEventListener("click", closeSheets);
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheets(); });
+
+let toastTimer = null;
+function showToast(msg) {
+  toastMsg.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+}
+
+render();
+</script>
+</body>
+</html>
