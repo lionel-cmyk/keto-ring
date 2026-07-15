@@ -240,6 +240,7 @@
       <div class="ring-value"><span id="totalVal">0</span><small>g</small></div>
       <div class="ring-label">of <span id="goalVal">20</span>g</div>
       <div class="ring-remaining" id="remainingLabel">20g left</div>
+      <div class="ring-remaining" id="kcalLabel"></div>
     </div>
   </div>
 
@@ -275,7 +276,7 @@
     <div class="step-val"><b id="stepQty">1</b><span id="stepUnit">serving</span></div>
     <button class="step-btn" id="stepUp" aria-label="Increase amount">+</button>
   </div>
-  <div class="sheet-carbs">Adds <b id="sheetCarbs">0g</b> net carbs</div>
+  <div class="sheet-carbs">Adds <b id="sheetCarbs">0g</b> net carbs<span id="sheetKcal"></span></div>
   <button class="add-btn" id="confirmAdd">Add to Today</button>
 </div>
 
@@ -302,93 +303,93 @@
 
 /* ---------- Built-in whole-food database (net carbs g per serving) ---------- */
 const FOODS = [
-  { n: "Egg", s: "1 large", g: 0.4 },
-  { n: "Avocado", s: "half, 100g", g: 1.8 },
-  { n: "Bacon", s: "2 slices", g: 0.2 },
-  { n: "Butter", s: "1 tbsp", g: 0 },
-  { n: "Olive oil", s: "1 tbsp", g: 0 },
-  { n: "Chicken breast", s: "150g", g: 0 },
-  { n: "Chicken thigh", s: "150g", g: 0 },
-  { n: "Ground beef", s: "150g", g: 0 },
-  { n: "Ribeye steak", s: "200g", g: 0 },
-  { n: "Salmon", s: "150g fillet", g: 0 },
-  { n: "Tuna", s: "1 can, 140g", g: 0 },
-  { n: "Shrimp", s: "100g", g: 0.2 },
-  { n: "Cheddar cheese", s: "30g", g: 0.4 },
-  { n: "Mozzarella", s: "30g", g: 0.7 },
-  { n: "Cream cheese", s: "2 tbsp", g: 1.6 },
-  { n: "Parmesan", s: "30g", g: 1.0 },
-  { n: "Feta", s: "30g", g: 1.2 },
-  { n: "Goat cheese", s: "30g", g: 0.3 },
-  { n: "Heavy cream", s: "2 tbsp", g: 0.8 },
-  { n: "Greek yogurt, plain", s: "170g", g: 6.0 },
-  { n: "Almonds", s: "28g, ~23 nuts", g: 2.6 },
-  { n: "Walnuts", s: "28g", g: 2.0 },
-  { n: "Pecans", s: "28g", g: 1.2 },
-  { n: "Macadamia nuts", s: "28g", g: 1.5 },
-  { n: "Peanut butter", s: "2 tbsp", g: 4.5 },
-  { n: "Almond butter", s: "2 tbsp", g: 3.0 },
-  { n: "Chia seeds", s: "2 tbsp", g: 1.7 },
-  { n: "Spinach", s: "100g raw", g: 1.4 },
-  { n: "Kale", s: "100g raw", g: 3.4 },
-  { n: "Lettuce", s: "100g", g: 1.5 },
-  { n: "Arugula", s: "100g", g: 2.1 },
-  { n: "Broccoli", s: "100g", g: 4.0 },
-  { n: "Cauliflower", s: "100g", g: 3.0 },
-  { n: "Zucchini", s: "100g", g: 2.1 },
-  { n: "Cucumber", s: "100g", g: 3.1 },
-  { n: "Bell pepper", s: "100g", g: 3.9 },
-  { n: "Mushrooms", s: "100g", g: 2.3 },
-  { n: "Asparagus", s: "100g", g: 1.8 },
-  { n: "Green beans", s: "100g", g: 4.3 },
-  { n: "Brussels sprouts", s: "100g", g: 5.2 },
-  { n: "Cabbage", s: "100g", g: 3.3 },
-  { n: "Celery", s: "100g", g: 1.4 },
-  { n: "Tomato", s: "1 medium", g: 3.3 },
-  { n: "Onion", s: "half, 55g", g: 3.9 },
-  { n: "Garlic", s: "1 clove", g: 0.9 },
-  { n: "Olives", s: "10 olives", g: 0.6 },
-  { n: "Strawberries", s: "100g", g: 5.7 },
-  { n: "Raspberries", s: "100g", g: 5.4 },
-  { n: "Blackberries", s: "100g", g: 4.9 },
-  { n: "Blueberries", s: "100g", g: 12.1 },
-  { n: "Lemon juice", s: "1 tbsp", g: 1.0 },
-  { n: "Coconut oil", s: "1 tbsp", g: 0 },
-  { n: "Coconut milk", s: "100ml", g: 2.7 },
-  { n: "Dark chocolate 85%", s: "2 squares, 20g", g: 3.8 },
-  { n: "Coffee, black", s: "1 cup", g: 0 },
-  { n: "Coffee with cream", s: "1 cup", g: 1.0 },
-  { n: "Dry red wine", s: "1 glass, 150ml", g: 3.8 },
-  { n: "Dry white wine", s: "1 glass, 150ml", g: 3.8 },
-  { n: "Vodka / whiskey", s: "1 shot, 45ml", g: 0 },
-  { n: "Cauliflower rice", s: "100g", g: 3.0 },
-  { n: "Zucchini noodles", s: "100g", g: 2.1 },
-  { n: "Pork chop", s: "150g", g: 0 },
-  { n: "Ham", s: "2 slices, 60g", g: 1.0 },
-  { n: "Salami", s: "5 slices, 50g", g: 1.0 },
-  { n: "Hot dog / sausage", s: "1 link", g: 1.5 },
-  { n: "Mayonnaise", s: "1 tbsp", g: 0.1 },
-  { n: "Mustard", s: "1 tsp", g: 0.3 },
-  { n: "Soy sauce", s: "1 tbsp", g: 0.8 },
-  { n: "Edamame", s: "100g", g: 3.6 },
-  { n: "Tofu", s: "100g", g: 1.5 },
-  { n: "Pickles, dill", s: "1 spear", g: 0.8 },
-  { n: "Sauerkraut", s: "100g", g: 1.4 },
-  { n: "Bone broth", s: "1 cup", g: 0.7 },
-  { n: "Whey protein", s: "1 scoop", g: 2.0 },
-  { n: "Milk, whole", s: "1 cup, 240ml", g: 11.7 },
-  { n: "Almond milk, unsweetened", s: "1 cup, 240ml", g: 1.0 },
-  { n: "Banana", s: "1 medium", g: 23.9 },
-  { n: "Apple", s: "1 medium", g: 20.8 },
-  { n: "White bread", s: "1 slice", g: 12.7 },
-  { n: "White rice, cooked", s: "100g", g: 27.9 },
-  { n: "Pasta, cooked", s: "100g", g: 29.3 },
-  { n: "Potato", s: "1 medium", g: 33.8 },
-  { n: "Sweet potato", s: "1 medium", g: 20.1 },
-  { n: "Sugar", s: "1 tsp", g: 4.2 },
-  { n: "Honey", s: "1 tbsp", g: 17.2 },
-  { n: "Beer", s: "1 can, 355ml", g: 12.6 },
-  { n: "Orange juice", s: "1 cup, 240ml", g: 25.5 }
+  { n: "Egg", s: "1 large", g: 0.4, k: 72 },
+  { n: "Avocado", s: "half, 100g", g: 1.8, k: 160 },
+  { n: "Bacon", s: "2 slices", g: 0.2, k: 90 },
+  { n: "Butter", s: "1 tbsp", g: 0, k: 102 },
+  { n: "Olive oil", s: "1 tbsp", g: 0, k: 119 },
+  { n: "Chicken breast", s: "150g", g: 0, k: 248 },
+  { n: "Chicken thigh", s: "150g", g: 0, k: 265 },
+  { n: "Ground beef", s: "150g", g: 0, k: 380 },
+  { n: "Ribeye steak", s: "200g", g: 0, k: 580 },
+  { n: "Salmon", s: "150g fillet", g: 0, k: 312 },
+  { n: "Tuna", s: "1 can, 140g", g: 0, k: 180 },
+  { n: "Shrimp", s: "100g", g: 0.2, k: 99 },
+  { n: "Cheddar cheese", s: "30g", g: 0.4, k: 121 },
+  { n: "Mozzarella", s: "30g", g: 0.7, k: 85 },
+  { n: "Cream cheese", s: "2 tbsp", g: 1.6, k: 100 },
+  { n: "Parmesan", s: "30g", g: 1.0, k: 118 },
+  { n: "Feta", s: "30g", g: 1.2, k: 79 },
+  { n: "Goat cheese", s: "30g", g: 0.3, k: 109 },
+  { n: "Heavy cream", s: "2 tbsp", g: 0.8, k: 102 },
+  { n: "Greek yogurt, plain", s: "170g", g: 6.0, k: 146 },
+  { n: "Almonds", s: "28g, ~23 nuts", g: 2.6, k: 164 },
+  { n: "Walnuts", s: "28g", g: 2.0, k: 185 },
+  { n: "Pecans", s: "28g", g: 1.2, k: 196 },
+  { n: "Macadamia nuts", s: "28g", g: 1.5, k: 204 },
+  { n: "Peanut butter", s: "2 tbsp", g: 4.5, k: 188 },
+  { n: "Almond butter", s: "2 tbsp", g: 3.0, k: 196 },
+  { n: "Chia seeds", s: "2 tbsp", g: 1.7, k: 138 },
+  { n: "Spinach", s: "100g raw", g: 1.4, k: 23 },
+  { n: "Kale", s: "100g raw", g: 3.4, k: 35 },
+  { n: "Lettuce", s: "100g", g: 1.5, k: 15 },
+  { n: "Arugula", s: "100g", g: 2.1, k: 25 },
+  { n: "Broccoli", s: "100g", g: 4.0, k: 34 },
+  { n: "Cauliflower", s: "100g", g: 3.0, k: 25 },
+  { n: "Zucchini", s: "100g", g: 2.1, k: 17 },
+  { n: "Cucumber", s: "100g", g: 3.1, k: 15 },
+  { n: "Bell pepper", s: "100g", g: 3.9, k: 31 },
+  { n: "Mushrooms", s: "100g", g: 2.3, k: 22 },
+  { n: "Asparagus", s: "100g", g: 1.8, k: 20 },
+  { n: "Green beans", s: "100g", g: 4.3, k: 31 },
+  { n: "Brussels sprouts", s: "100g", g: 5.2, k: 43 },
+  { n: "Cabbage", s: "100g", g: 3.3, k: 25 },
+  { n: "Celery", s: "100g", g: 1.4, k: 14 },
+  { n: "Tomato", s: "1 medium", g: 3.3, k: 22 },
+  { n: "Onion", s: "half, 55g", g: 3.9, k: 22 },
+  { n: "Garlic", s: "1 clove", g: 0.9, k: 4 },
+  { n: "Olives", s: "10 olives", g: 0.6, k: 40 },
+  { n: "Strawberries", s: "100g", g: 5.7, k: 32 },
+  { n: "Raspberries", s: "100g", g: 5.4, k: 52 },
+  { n: "Blackberries", s: "100g", g: 4.9, k: 43 },
+  { n: "Blueberries", s: "100g", g: 12.1, k: 57 },
+  { n: "Lemon juice", s: "1 tbsp", g: 1.0, k: 3 },
+  { n: "Coconut oil", s: "1 tbsp", g: 0, k: 117 },
+  { n: "Coconut milk", s: "100ml", g: 2.7, k: 180 },
+  { n: "Dark chocolate 85%", s: "2 squares, 20g", g: 3.8, k: 120 },
+  { n: "Coffee, black", s: "1 cup", g: 0, k: 2 },
+  { n: "Coffee with cream", s: "1 cup", g: 1.0, k: 25 },
+  { n: "Dry red wine", s: "1 glass, 150ml", g: 3.8, k: 125 },
+  { n: "Dry white wine", s: "1 glass, 150ml", g: 3.8, k: 121 },
+  { n: "Vodka / whiskey", s: "1 shot, 45ml", g: 0, k: 97 },
+  { n: "Cauliflower rice", s: "100g", g: 3.0, k: 25 },
+  { n: "Zucchini noodles", s: "100g", g: 2.1, k: 17 },
+  { n: "Pork chop", s: "150g", g: 0, k: 300 },
+  { n: "Ham", s: "2 slices, 60g", g: 1.0, k: 90 },
+  { n: "Salami", s: "5 slices, 50g", g: 1.0, k: 168 },
+  { n: "Hot dog / sausage", s: "1 link", g: 1.5, k: 150 },
+  { n: "Mayonnaise", s: "1 tbsp", g: 0.1, k: 94 },
+  { n: "Mustard", s: "1 tsp", g: 0.3, k: 3 },
+  { n: "Soy sauce", s: "1 tbsp", g: 0.8, k: 9 },
+  { n: "Edamame", s: "100g", g: 3.6, k: 121 },
+  { n: "Tofu", s: "100g", g: 1.5, k: 76 },
+  { n: "Pickles, dill", s: "1 spear", g: 0.8, k: 4 },
+  { n: "Sauerkraut", s: "100g", g: 1.4, k: 19 },
+  { n: "Bone broth", s: "1 cup", g: 0.7, k: 40 },
+  { n: "Whey protein", s: "1 scoop", g: 2.0, k: 120 },
+  { n: "Milk, whole", s: "1 cup, 240ml", g: 11.7, k: 149 },
+  { n: "Almond milk, unsweetened", s: "1 cup, 240ml", g: 1.0, k: 30 },
+  { n: "Banana", s: "1 medium", g: 23.9, k: 105 },
+  { n: "Apple", s: "1 medium", g: 20.8, k: 95 },
+  { n: "White bread", s: "1 slice", g: 12.7, k: 75 },
+  { n: "White rice, cooked", s: "100g", g: 27.9, k: 130 },
+  { n: "Pasta, cooked", s: "100g", g: 29.3, k: 158 },
+  { n: "Potato", s: "1 medium", g: 33.8, k: 161 },
+  { n: "Sweet potato", s: "1 medium", g: 20.1, k: 103 },
+  { n: "Sugar", s: "1 tsp", g: 4.2, k: 16 },
+  { n: "Honey", s: "1 tbsp", g: 17.2, k: 64 },
+  { n: "Beer", s: "1 can, 355ml", g: 12.6, k: 153 },
+  { n: "Orange juice", s: "1 cup, 240ml", g: 25.5, k: 112 }
 ];
 
 /* ---------- State ---------- */
@@ -422,6 +423,7 @@ ringProgress.style.strokeDasharray = CIRC;
 
 /* ---------- Render ---------- */
 function total() { return state.log.reduce((s, i) => s + i.carbs, 0); }
+function totalKcal() { return state.log.reduce((s, i) => s + (i.kcal || 0), 0); }
 
 function render() {
   const t = total(), goal = state.goal;
@@ -439,8 +441,12 @@ function render() {
   const left = goal - t;
   remainingLabel.textContent = left >= 0 ? fmt(left) + "g left" : fmt(-left) + "g over";
   remainingLabel.style.color = left >= 0 ? "var(--text-dim)" : "var(--red)";
+  const kc = totalKcal();
+  $("kcalLabel").textContent = kc ? Math.round(kc).toLocaleString() + " kcal" : "";
 
-  logCount.textContent = state.log.length ? state.log.length + " item" + (state.log.length > 1 ? "s" : "") + " · " + fmt(t) + "g" : "";
+  logCount.textContent = state.log.length
+    ? state.log.length + " item" + (state.log.length > 1 ? "s" : "") + " · " + fmt(t) + "g" + (kc ? " · " + Math.round(kc).toLocaleString() + " kcal" : "")
+    : "";
   if (!state.log.length) {
     log.innerHTML = '<div class="log-empty">Nothing logged yet.<br>Search a food above to start your ring.</div>';
   } else {
@@ -448,7 +454,7 @@ function render() {
       <div class="log-item">
         <div class="log-item-info">
           <div class="log-item-name">${esc(item.name)}</div>
-          <div class="log-item-meta">${esc(item.meta)}</div>
+          <div class="log-item-meta">${esc(item.meta)}${item.kcal ? " · " + item.kcal + " kcal" : ""}</div>
         </div>
         <div class="log-item-carbs">${fmt(item.carbs)}g</div>
         <button class="del-btn" data-del="${i}" aria-label="Remove ${esc(item.name)}">
@@ -472,7 +478,7 @@ searchInput.addEventListener("input", () => {
   if (!q) { results.classList.remove("open"); results.innerHTML = ""; return; }
 
   const local = FOODS.filter(f => f.n.toLowerCase().includes(q)).slice(0, 8);
-  renderResults(local.map(f => ({ name: f.n, serving: f.s, carbs: f.g, src: "local" })), q.length >= 3);
+  renderResults(local.map(f => ({ name: f.n, serving: f.s, carbs: f.g, kcal: f.k, src: "local" })), q.length >= 3);
 
   if (q.length >= 3) offTimer = setTimeout(() => searchOFF(q, local), 500);
 });
@@ -481,7 +487,7 @@ function renderResults(items, searching) {
   results.classList.add("open");
   results.innerHTML = items.map((f, i) => `
     <button class="food-row" data-idx="${i}">
-      <div><div class="food-name">${esc(f.name)}</div><div class="food-serving">${esc(f.serving)}</div></div>
+      <div><div class="food-name">${esc(f.name)}</div><div class="food-serving">${esc(f.serving)}${f.kcal != null ? " · " + Math.round(f.kcal) + " kcal" : ""}</div></div>
       <div class="food-carbs ${carbClass(f.carbs)}"><b>${fmt(f.carbs)}g</b><span>net carbs</span></div>
     </button>`).join("")
     + (searching ? '<div class="spinner" id="offSpinner"></div>' : "")
@@ -501,7 +507,7 @@ async function searchOFF(q, localItems) {
     const packaged = (data.products || []).map(p => offToFood(p)).filter(Boolean)
       .filter(f => { const k = f.name.toLowerCase() + "|" + f.carbs; if (seen.has(k)) return false; seen.add(k); return true; })
       .slice(0, 6);
-    const merged = localItems.map(f => ({ name: f.n, serving: f.s, carbs: f.g })).concat(packaged);
+    const merged = localItems.map(f => ({ name: f.n, serving: f.s, carbs: f.g, kcal: f.k })).concat(packaged);
     renderResults(merged, false);
   } catch {
     if (seq !== offSeq) return;
@@ -522,10 +528,12 @@ function offToFood(p) {
   const brand = p.brands ? p.brands.split(",")[0].trim() : "";
   const name = brand && brand.toLowerCase() !== p.product_name.trim().toLowerCase()
     ? p.product_name + " · " + brand : p.product_name;
+  const kcal100 = parseFloat(n["energy-kcal_100g"]);
   return {
     name,
     serving: "per 100g",
     carbs: Math.round(net100 * 10) / 10,
+    kcal: isNaN(kcal100) ? null : Math.round(kcal100),
     per100: true
   };
 }
@@ -563,6 +571,8 @@ function openAddSheet(food) {
 function updateSheet() {
   $("stepQty").textContent = fmt(pendingQty);
   $("sheetCarbs").textContent = fmt(pendingFood.carbs * pendingQty) + "g";
+  $("sheetKcal").textContent = pendingFood.kcal != null
+    ? " · " + Math.round(pendingFood.kcal * pendingQty) + " kcal" : "";
 }
 $("stepDown").addEventListener("click", () => { if (pendingQty > 0.5) { pendingQty -= 0.5; updateSheet(); } });
 $("stepUp").addEventListener("click", () => { if (pendingQty < 20) { pendingQty += 0.5; updateSheet(); } });
@@ -572,7 +582,8 @@ $("confirmAdd").addEventListener("click", () => {
   state.log.unshift({
     name: pendingFood.name,
     meta: fmt(pendingQty) + (pendingFood.per100 ? " × 100g" : " × " + pendingFood.serving),
-    carbs: Math.round(pendingFood.carbs * pendingQty * 10) / 10
+    carbs: Math.round(pendingFood.carbs * pendingQty * 10) / 10,
+    kcal: pendingFood.kcal != null ? Math.round(pendingFood.kcal * pendingQty) : null
   });
   store.save(state);
   closeSheets(); render();
